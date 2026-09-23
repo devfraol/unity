@@ -70,6 +70,25 @@ export async function getPostsByCategory(categorySlug: string): Promise<BlogPost
   return data;
 }
 
+export async function getPostsForAdmin(): Promise<BlogPost[]> {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw toServiceError(error);
+  return data;
+}
+
+export async function getPostByIdForAdmin(id: string): Promise<BlogPost | null> {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw toServiceError(error);
+  return data;
+}
+
 export async function createPost(input: BlogPostInput): Promise<BlogPost> {
   const author_id = await requireCurrentUserId();
   const data = validatePost(input);
@@ -117,4 +136,9 @@ export async function publishPost(id: string): Promise<BlogPost> {
     .single();
   if (error) throw toServiceError(error);
   return data;
+}
+
+export async function deletePost(id: string): Promise<void> {
+  const { error } = await supabase.from("blog_posts").delete().eq("id", id);
+  if (error) throw toServiceError(error);
 }
