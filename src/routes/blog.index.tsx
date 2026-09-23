@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
-import { getCategories, getFeaturedPost, listPosts } from "@/lib/blog";
+import { useEffect, useMemo, useState } from "react";
+import { getCategories } from "@/services/category-service";
+import {
+  getFeaturedPosts,
+  getPostsByCategory,
+  getPublishedPosts,
+  type PublicBlogPost,
+} from "@/services/blog-service";
+import type { Category } from "@/types/database";
 import { PageHeader, SectionLabel, ActionLink } from "@/components/site/kit";
 import { PageTransition, Reveal } from "@/components/site/motion";
 import { FeaturedPost, PostCard } from "@/components/blog/PostCards";
@@ -30,19 +37,45 @@ export const Route = createFileRoute("/blog/")({
   }),
   component: BlogIndexPage,
 });
-
 const PAGE_SIZE = 6;
-
 function BlogIndexPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [visible, setVisible] = useState(PAGE_SIZE);
-
-  const categories = getCategories();
-  const featured = getFeaturedPost();
-  const posts = useMemo(() => listPosts({ category, query }), [category, query]);
-  const shown = posts.slice(0, visible);
-
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [posts, setPosts] = useState<PublicBlogPost[]>([]);
+  const [featured, setFeatured] = useState<PublicBlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    getCategories()
+      .then(setCategories)
+      .catch(() => setFailed(true));
+  }, []);
+  useEffect(() => {
+    setLoading(true);
+    setFailed(false);
+    const load = category === "all" ? getPublishedPosts() : getPostsByCategory(category);
+    Promise.all([load, getFeaturedPosts()])
+      .then(([nextPosts, featuredPosts]) => {
+        setPosts(nextPosts);
+        setFeatured(featuredPosts[0] ?? null);
+      })
+      .catch(() => setFailed(true))
+      .finally(() => setLoading(false));
+  }, [category]);
+  const filtered = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return normalized
+      ? posts.filter((post) =>
+          [post.title, post.excerpt ?? "", post.category?.name ?? ""].some((value) =>
+            value.toLowerCase().includes(normalized),
+          ),
+        )
+      : posts;
+  }, [posts, query]);
+  const shown = filtered.slice(0, visible);
+  const showFeatured = featured && category === "all" && !query;
   return (
     <PageTransition>
       <PageHeader
@@ -50,19 +83,16 @@ function BlogIndexPage() {
         title="Stories from our community"
         lead="Stories, updates, resources and community perspectives from the people we walk alongside."
       />
-
-      {featured && (
+      {showFeatured && (
         <section className="container-page pb-20" aria-label="Featured story">
           <FeaturedPost post={featured} />
         </section>
       )}
-
       <section className="container-page pb-28" aria-labelledby="all-articles">
         <div className="flex flex-col gap-8 border-t border-border pt-10 lg:flex-row lg:items-center lg:justify-between">
           <h2 id="all-articles" className="label-eyebrow text-clay">
             All articles
           </h2>
-
           <div className="flex flex-1 flex-col gap-6 lg:max-w-xl">
             <label htmlFor="blog-search" className="sr-only">
               Search articles
@@ -73,8 +103,8 @@ function BlogIndexPage() {
                 id="blog-search"
                 type="search"
                 value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
+                onChange={(event) => {
+                  setQuery(event.target.value);
                   setVisible(PAGE_SIZE);
                 }}
                 placeholder="Search stories"
@@ -84,30 +114,34 @@ function BlogIndexPage() {
             </div>
           </div>
         </div>
-
         <nav className="mt-8 flex flex-wrap gap-2" aria-label="Filter by category">
-          {[{ slug: "all", name: "All" }, ...categories].map((c) => (
+          {[{ slug: "all", name: "All" }, ...categories].map((item) => (
             <button
-              key={c.slug}
+              key={item.slug}
               type="button"
-              aria-pressed={category === c.slug}
+              aria-pressed={category === item.slug}
               onClick={() => {
-                setCategory(c.slug);
+                setCategory(item.slug);
                 setVisible(PAGE_SIZE);
               }}
               className={cn(
                 "min-h-11 rounded-full border px-5 text-sm font-medium transition-colors",
-                category === c.slug
+                category === item.slug
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border text-muted-foreground hover:border-primary hover:text-primary",
               )}
             >
-              {c.name}
+              {item.name}
             </button>
           ))}
         </nav>
-
-        {shown.length > 0 ? (
+        {loading ? (
+          <p className="mt-14 text-lg text-muted-foreground">Loading stories…</p>
+        ) : failed ? (
+          <p role="alert" className="mt-14 text-lg text-muted-foreground">
+            We could not load stories right now. Please try again soon.
+          </p>
+        ) : shown.length > 0 ? (
           <>
             <ul className="mt-14 grid gap-12 md:grid-cols-2 lg:grid-cols-3">
               {shown.map((post, i) => (
@@ -118,11 +152,11 @@ function BlogIndexPage() {
                 </Reveal>
               ))}
             </ul>
-            {visible < posts.length && (
+            {visible < filtered.length && (
               <div className="mt-14 flex justify-center">
                 <button
                   type="button"
-                  onClick={() => setVisible((v) => v + PAGE_SIZE)}
+                  onClick={() => setVisible((value) => value + PAGE_SIZE)}
                   className="min-h-11 rounded-full border border-primary/30 px-7 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground"
                 >
                   Load more stories
@@ -134,18 +168,20 @@ function BlogIndexPage() {
           <div className="mt-14 border-t border-border pt-14">
             <SectionLabel>Coming soon</SectionLabel>
             <p className="display-serif mt-6 max-w-2xl text-ink">
-              Unity Welcome has not published articles here yet. Community voices are already
-              shared on our stories page.
+              {query || category !== "all"
+                ? "No published stories match your search."
+                : "Unity Welcome has not published articles here yet. Community voices are already shared on our stories page."}
             </p>
-            <div className="mt-9">
-              <ActionLink to="/stories" variant="outline">
-                Read community stories
-              </ActionLink>
-            </div>
+            {!query && category === "all" && (
+              <div className="mt-9">
+                <ActionLink to="/stories" variant="outline">
+                  Read community stories
+                </ActionLink>
+              </div>
+            )}
           </div>
         )}
       </section>
-
       <CTASection />
     </PageTransition>
   );

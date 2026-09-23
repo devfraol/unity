@@ -1,55 +1,24 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { formatPostDate, getPost, getRelatedPosts } from "@/lib/blog";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { getPostBySlug, getPublishedPosts, type PublicBlogPost } from "@/services/blog-service";
+import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { ActionLink } from "@/components/site/kit";
 import { PageTransition, ParallaxImage, Reveal } from "@/components/site/motion";
-import { PostCard, PostMeta } from "@/components/blog/PostCards";
+import { formatPostDate, PostCard, PostMeta } from "@/components/blog/PostCards";
 import { CommentSection } from "@/components/blog/CommentSection";
 import { CTASection } from "@/components/site/CTASection";
 
 export const Route = createFileRoute("/blog/$slug")({
-  loader: ({ params }) => {
-    const post = getPost(params.slug);
-    if (!post) throw notFound();
-    return { post, related: getRelatedPosts(post) };
-  },
-  head: ({ loaderData, params }) => {
-    if (!loaderData) {
-      return {
-        meta: [{ title: "Story not found — Unity Welcome" }, { name: "robots", content: "noindex" }],
-      };
-    }
-    const { post } = loaderData;
-    return {
-      meta: [
-        { title: `${post.title} — Unity Welcome Settlement Agency` },
-        { name: "description", content: post.excerpt.slice(0, 155) },
-        { property: "og:title", content: post.title },
-        { property: "og:description", content: post.excerpt.slice(0, 155) },
-        { property: "og:type", content: "article" },
-        { property: "og:url", content: `/blog/${params.slug}` },
-        { name: "twitter:card", content: "summary_large_image" },
-      ],
-      links: [{ rel: "canonical", href: `/blog/${params.slug}` }],
-      scripts: [
-        {
-          type: "application/ld+json",
-          children: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            headline: post.title,
-            description: post.excerpt,
-            datePublished: post.publishedAt,
-            author: { "@type": "Person", name: post.author.name },
-            publisher: { "@type": "NGO", name: "Unity Welcome Settlement Agency" },
-          }),
-        },
-      ],
-    };
-  },
-  notFoundComponent: PostNotFound,
+  head: ({ params }) => ({
+    meta: [
+      { title: `Story — Unity Welcome Settlement Agency` },
+      { name: "robots", content: "index,follow" },
+      { property: "og:url", content: `/blog/${params.slug}` },
+    ],
+    links: [{ rel: "canonical", href: `/blog/${params.slug}` }],
+  }),
   component: BlogPostPage,
 });
-
 function PostNotFound() {
   return (
     <div className="container-page py-44 text-center">
@@ -61,58 +30,92 @@ function PostNotFound() {
     </div>
   );
 }
-
 function BlogPostPage() {
-  const { post, related } = Route.useLoaderData();
-
+  const { slug } = Route.useParams();
+  const [post, setPost] = useState<PublicBlogPost | null | undefined>(undefined);
+  const [related, setRelated] = useState<PublicBlogPost[]>([]);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setPost(undefined);
+    setFailed(false);
+    Promise.all([getPostBySlug(slug), getPublishedPosts()])
+      .then(([nextPost, posts]) => {
+        setPost(nextPost);
+        setRelated(
+          nextPost
+            ? posts
+                .filter((item) => item.id !== nextPost.id)
+                .sort(
+                  (a, b) =>
+                    Number(b.category_id === nextPost.category_id) -
+                    Number(a.category_id === nextPost.category_id),
+                )
+                .slice(0, 3)
+            : [],
+        );
+      })
+      .catch(() => {
+        setFailed(true);
+        setPost(null);
+      });
+  }, [slug]);
+  if (post === undefined)
+    return (
+      <div className="container-page py-44 text-center text-muted-foreground">Loading story…</div>
+    );
+  if (failed) {
+    return (
+      <div className="container-page py-44 text-center text-muted-foreground">
+        We could not load this story right now. Please try again soon.
+      </div>
+    );
+  }
+  if (!post) return <PostNotFound />;
   return (
     <PageTransition>
       <article>
         <header className="container-page pt-36 pb-12 md:pt-44 md:pb-16">
           <PostMeta post={post} />
           <h1 className="display-lg mt-6 max-w-4xl text-ink">{post.title}</h1>
-          <p className="body-lead mt-7 max-w-2xl">{post.excerpt}</p>
+          {post.excerpt && <p className="body-lead mt-7 max-w-2xl">{post.excerpt}</p>}
           <p className="mt-8 text-sm text-muted-foreground">
-            By {post.author.name}
-            {post.author.role ? `, ${post.author.role}` : ""} · {formatPostDate(post.publishedAt)}
+            By {post.author?.full_name || "Unity Welcome"} · {formatPostDate(post.published_at)}
           </p>
         </header>
-
-        {post.coverImage && (
+        {post.cover_image && (
           <div className="container-page">
             <ParallaxImage
-              src={post.coverImage}
+              src={post.cover_image}
               alt=""
               className="aspect-[16/9] w-full rounded-sm"
               distance={30}
             />
           </div>
         )}
-
         <div className="container-page py-20 md:py-28">
-          <div className="mx-auto max-w-2xl space-y-7 text-lg leading-relaxed text-muted-foreground">
-            {post.content.map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-          </div>
-
+          <div
+            className="blog-content mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground"
+            dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(post.content) }}
+          />
           <div className="mx-auto mt-20 max-w-2xl">
-            <CommentSection postSlug={post.slug} />
+            <CommentSection postId={post.id} />
           </div>
         </div>
       </article>
-
       {related.length > 0 && (
-        <section className="border-t border-border py-20 md:py-28" aria-labelledby="related-stories">
+        <section
+          className="border-t border-border py-20 md:py-28"
+          aria-labelledby="related-stories"
+        >
           <div className="container-page">
             <h2 id="related-stories" className="label-eyebrow text-clay">
               Related stories
             </h2>
             <ul className="mt-10 grid gap-10 md:grid-cols-3">
-              {related.map((p, i) => (
-                <Reveal key={p.slug} delay={i * 0.06}>
+              {related.map((item, index) => (
+                <Reveal key={item.slug} delay={index * 0.06}>
                   <li>
-                    <PostCard post={p} />
+                    <PostCard post={item} />
                   </li>
                 </Reveal>
               ))}
@@ -120,7 +123,6 @@ function BlogPostPage() {
           </div>
         </section>
       )}
-
       <CTASection />
     </PageTransition>
   );

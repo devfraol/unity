@@ -1,24 +1,48 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import { formatPostDate } from "@/lib/blog";
-import type { BlogPost } from "@/types/blog";
+import type { PublicBlogPost } from "@/services/blog-service";
 
-export function PostMeta({ post, tone = "dark" }: { post: BlogPost; tone?: "dark" | "light" }) {
+export function formatPostDate(iso: string | null): string {
+  if (!iso) return "Recently published";
+  return new Date(iso).toLocaleDateString("en-CA", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function readingTime(content: string): number {
+  return Math.max(
+    1,
+    Math.ceil(
+      content
+        .replace(/<[^>]*>/g, " ")
+        .trim()
+        .split(/\s+/).length / 200,
+    ),
+  );
+}
+
+export function PostMeta({
+  post,
+  tone = "dark",
+}: {
+  post: PublicBlogPost;
+  tone?: "dark" | "light";
+}) {
   return (
     <p
-      className={`label-eyebrow flex flex-wrap items-center gap-3 ${
-        tone === "dark" ? "text-clay" : "text-gold"
-      }`}
+      className={`label-eyebrow flex flex-wrap items-center gap-3 ${tone === "dark" ? "text-clay" : "text-gold"}`}
     >
-      <span>{post.category}</span>
+      <span>{post.category?.name ?? "Unity Welcome"}</span>
       <span aria-hidden="true" className="h-px w-6 bg-current opacity-50" />
-      <span className="text-muted-foreground">{formatPostDate(post.publishedAt)}</span>
-      <span className="text-muted-foreground">· {post.readTime} min read</span>
+      <span className="text-muted-foreground">{formatPostDate(post.published_at)}</span>
+      <span className="text-muted-foreground">· {readingTime(post.content)} min read</span>
     </p>
   );
 }
 
-export function FeaturedPost({ post }: { post: BlogPost }) {
+export function FeaturedPost({ post }: { post: PublicBlogPost }) {
   return (
     <article className="grid gap-10 lg:grid-cols-12 lg:items-center">
       <Link
@@ -28,9 +52,9 @@ export function FeaturedPost({ post }: { post: BlogPost }) {
         aria-label={post.title}
       >
         <div className="aspect-[16/10] overflow-hidden rounded-sm bg-cream-deep">
-          {post.coverImage && (
+          {post.cover_image && (
             <img
-              src={post.coverImage}
+              src={post.cover_image}
               alt=""
               loading="lazy"
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -45,7 +69,9 @@ export function FeaturedPost({ post }: { post: BlogPost }) {
             {post.title}
           </Link>
         </h3>
-        <p className="mt-5 text-base leading-relaxed text-muted-foreground">{post.excerpt}</p>
+        {post.excerpt && (
+          <p className="mt-5 text-base leading-relaxed text-muted-foreground">{post.excerpt}</p>
+        )}
         <Link
           to="/blog/$slug"
           params={{ slug: post.slug }}
@@ -62,14 +88,14 @@ export function FeaturedPost({ post }: { post: BlogPost }) {
   );
 }
 
-export function PostCard({ post }: { post: BlogPost }) {
+export function PostCard({ post }: { post: PublicBlogPost }) {
   return (
     <article>
       <Link to="/blog/$slug" params={{ slug: post.slug }} className="group block">
         <div className="aspect-[4/3] overflow-hidden rounded-sm bg-cream-deep">
-          {post.coverImage && (
+          {post.cover_image && (
             <img
-              src={post.coverImage}
+              src={post.cover_image}
               alt=""
               loading="lazy"
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
