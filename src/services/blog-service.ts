@@ -118,3 +118,23 @@ export async function publishPost(id: string): Promise<BlogPost> {
   if (error) throw toServiceError(error);
   return data;
 }
+
+export async function getPostsForAdmin(): Promise<BlogPost[]> {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .order("updated_at", { ascending: false });
+  if (error) throw toServiceError(error);
+  return data;
+}
+
+export async function getPostByIdForAdmin(id: string): Promise<BlogPost | null> {
+  const { data, error } = await supabase.from("blog_posts").select("*").eq("id", id).maybeSingle();
+  if (error) throw toServiceError(error);
+  return data;
+}
+
+export async function deletePost(id: string): Promise<void> {
+  const { error } = await supabase.from("blog_posts").delete().eq("id", id);
+  if (error) throw toServiceError(error);
+}

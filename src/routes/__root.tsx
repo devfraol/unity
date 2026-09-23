@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -14,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { ScrollProgress } from "@/components/site/motion";
+import { Toaster } from "@/components/ui/sonner";
 import { org } from "@/data/site";
 
 function NotFoundComponent() {
@@ -136,21 +138,27 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  const isAdmin = useRouterState({
+    select: (state) => state.location.pathname.startsWith("/admin"),
+  });
   return (
     <QueryClientProvider client={queryClient}>
-      <a
-        href="#main"
-        className="sr-only rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[80]"
-      >
-        Skip to content
-      </a>
-      <ScrollProgress />
-      <Navbar />
+      {!isAdmin && (
+        <a
+          href="#main"
+          className="sr-only rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[80]"
+        >
+          Skip to content
+        </a>
+      )}
+      {!isAdmin && <ScrollProgress />}
+      {!isAdmin && <Navbar />}
       <main id="main">
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </main>
-      <Footer />
+      {!isAdmin && <Footer />}
+      {!isAdmin && <Toaster richColors />}
     </QueryClientProvider>
   );
 }
