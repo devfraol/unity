@@ -43,6 +43,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Toaster } from "@/components/ui/sonner";
 import { RichTextEditor } from "./RichTextEditor";
+import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import type { BlogPost, Category, Comment, Profile } from "@/types/database";
 
 const nav = [
@@ -61,39 +62,7 @@ const slugify = (value: string) =>
 const fmt = (value: string | null) => (value ? new Date(value).toLocaleDateString() : "—");
 const errorText = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong. Please try again.";
-const sanitizeContent = (html: string) => {
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  const allowed = new Set([
-    "P",
-    "BR",
-    "H2",
-    "H3",
-    "STRONG",
-    "B",
-    "EM",
-    "I",
-    "A",
-    "UL",
-    "OL",
-    "LI",
-    "BLOCKQUOTE",
-    "IMG",
-  ]);
-  doc.body.querySelectorAll("*").forEach((el) => {
-    if (!allowed.has(el.tagName)) {
-      el.replaceWith(...Array.from(el.childNodes));
-      return;
-    }
-    Array.from(el.attributes).forEach((attr) => {
-      const ok =
-        (el.tagName === "A" && attr.name === "href" && /^https?:/i.test(attr.value)) ||
-        (el.tagName === "IMG" && attr.name === "src" && /^https?:/i.test(attr.value)) ||
-        (el.tagName === "IMG" && attr.name === "alt");
-      if (!ok) el.removeAttribute(attr.name);
-    });
-  });
-  return doc.body.innerHTML;
-};
+const sanitizeContent = sanitizeRichHtml;
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -182,7 +151,10 @@ export function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return toast.error("Enter your email and password.");
+    if (!email || !password) {
+      toast.error("Enter your email and password.");
+      return;
+    }
     setLoading(true);
     try {
       await signInWithPassword(email, password);
@@ -335,7 +307,9 @@ export function BlogList() {
         setCategories(c);
       })
       .catch((e) => toast.error(errorText(e)));
-  useEffect(load, []);
+  useEffect(() => {
+    void load();
+  }, []);
   const filtered = posts.filter(
     (p) =>
       (status === "all" || p.status === status) &&
@@ -521,8 +495,10 @@ export function PostEditor({ id }: { id?: string }) {
     }
   };
   const save = async (status: "draft" | "published" | "archived") => {
-    if (!form.title || !form.slug || !form.content.replace(/<[^>]*>/g, "").trim())
-      return toast.error("Title, slug, and content are required.");
+    if (!form.title || !form.slug || !form.content.replace(/<[^>]*>/g, "").trim()) {
+      toast.error("Title, slug, and content are required.");
+      return;
+    }
     setSaving(true);
     try {
       const data = {
@@ -683,7 +659,9 @@ export function Categories() {
     getCategories()
       .then(setItems)
       .catch((e) => toast.error(errorText(e)));
-  useEffect(load, []);
+  useEffect(() => {
+    void load();
+  }, []);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     try {
@@ -797,7 +775,9 @@ export function Comments() {
         setPosts(p);
       })
       .catch((e) => toast.error(errorText(e)));
-  useEffect(load, []);
+  useEffect(() => {
+    void load();
+  }, []);
   const act = (fn: () => Promise<unknown>, msg: string) =>
     fn()
       .then(() => {

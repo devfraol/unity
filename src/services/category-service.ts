@@ -1,7 +1,11 @@
 import { ServiceError, toServiceError } from "@/lib/supabase/errors";
 import { supabase } from "@/lib/supabase/client";
 import { categorySchema, type CategoryInput } from "@/lib/supabase/validation";
-import type { Category } from "@/types/database";
+import type { Category, Database } from "@/types/database";
+
+function withoutUndefined<T extends Record<string, unknown>>(input: T): T {
+  return Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined)) as T;
+}
 
 function validateCategory(input: CategoryInput): CategoryInput {
   const parsed = categorySchema.safeParse(input);
@@ -29,7 +33,11 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
 export async function createCategory(input: CategoryInput): Promise<Category> {
   const { data, error } = await supabase
     .from("categories")
-    .insert(validateCategory(input))
+    .insert(
+      withoutUndefined(
+        validateCategory(input),
+      ) as Database["public"]["Tables"]["categories"]["Insert"],
+    )
     .select()
     .single();
   if (error) throw toServiceError(error);
@@ -39,7 +47,11 @@ export async function createCategory(input: CategoryInput): Promise<Category> {
 export async function updateCategory(id: string, input: CategoryInput): Promise<Category> {
   const { data, error } = await supabase
     .from("categories")
-    .update(validateCategory(input))
+    .update(
+      withoutUndefined(
+        validateCategory(input),
+      ) as Database["public"]["Tables"]["categories"]["Update"],
+    )
     .eq("id", id)
     .select()
     .single();

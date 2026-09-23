@@ -1,72 +1,82 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { MessageCircle } from "lucide-react";
 import { ActionButton } from "@/components/site/kit";
-import type { Comment } from "@/types/blog";
+import { createComment, getApprovedComments } from "@/services/comment-service";
+import type { Comment } from "@/types/database";
 
-/**
- * Comment UI only. There is no backend yet, so nothing is stored permanently —
- * submitted comments live in local state for this visit and the notice below
- * makes that explicit. Phase 2 swaps `comments` / `onSubmit` for Cloud data.
- */
-export function CommentSection({ postSlug }: { postSlug: string }) {
+export function CommentSection({ postId }: { postId: string }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  const [notice, setNotice] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  useEffect(() => {
+    setLoading(true);
+    getApprovedComments(postId)
+      .then(setComments)
+      .catch(() => setError("Comments could not be loaded right now."))
+      .finally(() => setLoading(false));
+  }, [postId]);
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
     if (name.trim().length < 2 || body.trim().length < 4) {
       setError("Please add your name and a comment before posting.");
       return;
     }
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError("Please enter a valid email address.");
       return;
     }
     setError(null);
-    setComments((prev) => [
-      ...prev,
-      {
-        id: `${Date.now()}`,
-        postSlug,
+    setNotice(null);
+    setSubmitting(true);
+    try {
+      await createComment({
+        post_id: postId,
         name: name.trim(),
-        body: body.trim(),
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-    setName("");
-    setEmail("");
-    setBody("");
+        email: email.trim(),
+        content: body.trim(),
+      });
+      setName("");
+      setEmail("");
+      setBody("");
+      setNotice("Your comment has been submitted and is awaiting moderation.");
+    } catch {
+      setError("Your comment could not be submitted. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
-
   const field =
     "w-full border-b border-border bg-transparent py-3 text-ink outline-none placeholder:text-muted-foreground focus-visible:border-primary";
-
   return (
     <section className="border-t border-border pt-14" aria-labelledby="comments-heading">
       <h2 id="comments-heading" className="heading-md flex items-center gap-3 text-ink">
         <MessageCircle className="size-5 text-clay" aria-hidden="true" />
         Comments ({comments.length})
       </h2>
-
       <p className="mt-3 text-sm text-muted-foreground">
-        Comments are not stored yet — this discussion space is being prepared and anything you post
-        here stays on your screen only.
+        Comments are reviewed before they are visible publicly.
       </p>
-
-      {comments.length > 0 && (
-        <ul className="mt-10 space-y-8">
-          {comments.map((c) => (
-            <li key={c.id} className="border-t border-border pt-6">
-              <p className="text-sm font-semibold text-ink">{c.name}</p>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.body}</p>
-            </li>
-          ))}
-        </ul>
+      {loading ? (
+        <p className="mt-8 text-sm text-muted-foreground">Loading comments…</p>
+      ) : (
+        comments.length > 0 && (
+          <ul className="mt-10 space-y-8">
+            {comments.map((comment) => (
+              <li key={comment.id} className="border-t border-border pt-6">
+                <p className="text-sm font-semibold text-ink">{comment.name}</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {comment.content}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )
       )}
-
       <form onSubmit={handleSubmit} className="mt-10 grid gap-6 md:max-w-2xl" noValidate>
         <div className="grid gap-6 md:grid-cols-2">
           <div>
@@ -77,22 +87,25 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
               id="comment-name"
               className={field}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(event) => setName(event.target.value)}
               maxLength={80}
               required
+              disabled={submitting}
             />
           </div>
           <div>
             <label htmlFor="comment-email" className="label-eyebrow text-clay">
-              Email (optional)
+              Email
             </label>
             <input
               id="comment-email"
               type="email"
               className={field}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              maxLength={200}
+              onChange={(event) => setEmail(event.target.value)}
+              maxLength={254}
+              required
+              disabled={submitting}
             />
           </div>
         </div>
@@ -104,9 +117,10 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
             id="comment-body"
             className={`${field} min-h-28 resize-y`}
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={(event) => setBody(event.target.value)}
             maxLength={1000}
             required
+            disabled={submitting}
           />
         </div>
         {error && (
@@ -114,9 +128,14 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
             {error}
           </p>
         )}
+        {notice && (
+          <p role="status" className="text-sm text-primary">
+            {notice}
+          </p>
+        )}
         <div>
-          <ActionButton type="submit" variant="outline">
-            Post comment
+          <ActionButton type="submit" variant="outline" disabled={submitting}>
+            {submitting ? "Submitting…" : "Post comment"}
           </ActionButton>
         </div>
       </form>

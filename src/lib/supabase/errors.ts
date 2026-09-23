@@ -1,7 +1,7 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 
 export type ServiceErrorCode =
-  "authentication" | "permission" | "validation" | "network" | "database";
+  "authentication" | "authorization" | "permission" | "validation" | "network" | "database";
 
 export class ServiceError extends Error {
   readonly code: ServiceErrorCode;
@@ -20,8 +20,9 @@ export function toServiceError(error: PostgrestError | Error | null): ServiceErr
     return new ServiceError("authentication", "Please sign in to continue.", { cause: error });
   }
   if (
-    error &&
-    (error.code === "42501" || message.includes("permission") || message.includes("row-level"))
+    (error && "code" in error && error.code === "42501") ||
+    message.includes("permission") ||
+    message.includes("row-level")
   ) {
     return new ServiceError("permission", "You do not have permission to perform this action.", {
       cause: error,
