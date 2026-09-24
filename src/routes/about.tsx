@@ -5,6 +5,7 @@ import { boardPhotos, team } from "@/lib/images";
 import { PageHeader, SectionLabel } from "@/components/site/kit";
 import { PageTransition, ParallaxImage, Reveal } from "@/components/site/motion";
 import { CTASection } from "@/components/site/CTASection";
+import { absoluteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -22,10 +23,12 @@ export const Route = createFileRoute("/about")({
           "Our vision, mission, values and the board members guiding Unity Welcome Settlement Agency.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/about" },
+      { property: "og:url", content: absoluteUrl("/about") },
+      { property: "og:image", content: absoluteUrl(team) },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: absoluteUrl(team) },
     ],
-    links: [{ rel: "canonical", href: "/about" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/about") }],
   }),
   component: AboutPage,
 });

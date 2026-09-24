@@ -55,7 +55,9 @@ export function FeaturedPost({ post }: { post: PublicBlogPost }) {
           {post.cover_image && (
             <img
               src={post.cover_image}
-              alt=""
+              alt={`Cover image for ${post.title}`}
+              width={1200}
+              height={750}
               loading="lazy"
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
@@ -96,7 +98,9 @@ export function PostCard({ post }: { post: PublicBlogPost }) {
           {post.cover_image && (
             <img
               src={post.cover_image}
-              alt=""
+              alt={`Cover image for ${post.title}`}
+              width={800}
+              height={600}
               loading="lazy"
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
