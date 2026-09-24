@@ -143,7 +143,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   const isAdmin = useRouterState({
-    select: (state) => state.location.pathname.startsWith("/admin"),
+    select: (state) => state.location.pathname.startsWith("/uw-cms"),
   });
   return (
     <QueryClientProvider client={queryClient}>
