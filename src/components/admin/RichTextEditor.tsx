@@ -74,9 +74,10 @@ export function RichTextEditor({
         contentEditable
         suppressContentEditableWarning
         role="textbox"
+        aria-label="Post content editor"
         aria-multiline="true"
         onInput={() => onChange(editor.current?.innerHTML || "")}
-        className="min-h-72 p-4 outline-none prose prose-sm max-w-none"
+        className="min-h-72 p-4 outline-none prose prose-sm max-w-none focus-visible:ring-2 focus-visible:ring-ring"
       />
     </div>
   );
