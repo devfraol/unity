@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { contactSubjects, org } from "@/data/site";
 import { ActionButton, PageHeader, SectionLabel } from "@/components/site/kit";
 import { PageTransition, Reveal } from "@/components/site/motion";
+import { absoluteUrl, DEFAULT_OG_IMAGE } from "@/lib/seo";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -20,10 +21,12 @@ export const Route = createFileRoute("/contact")({
         content: "Reach our team for support, volunteering or partnership enquiries.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/contact" },
+      { property: "og:url", content: absoluteUrl("/contact") },
+      { property: "og:image", content: DEFAULT_OG_IMAGE },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: DEFAULT_OG_IMAGE },
     ],
-    links: [{ rel: "canonical", href: "/contact" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/contact") }],
   }),
   component: ContactPage,
 });

@@ -14,6 +14,7 @@ import { PageTransition, Reveal } from "@/components/site/motion";
 import { FeaturedPost, PostCard } from "@/components/blog/PostCards";
 import { CTASection } from "@/components/site/CTASection";
 import { cn } from "@/lib/utils";
+import { absoluteUrl, DEFAULT_OG_IMAGE } from "@/lib/seo";
 
 export const Route = createFileRoute("/blog/")({
   head: () => ({
@@ -30,10 +31,12 @@ export const Route = createFileRoute("/blog/")({
         content: "Stories, updates, resources and community perspectives from Unity Welcome.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/blog" },
+      { property: "og:url", content: absoluteUrl("/blog") },
+      { property: "og:image", content: DEFAULT_OG_IMAGE },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: DEFAULT_OG_IMAGE },
     ],
-    links: [{ rel: "canonical", href: "/blog" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/blog") }],
   }),
   component: BlogIndexPage,
 });
@@ -166,7 +169,7 @@ function BlogIndexPage() {
           </>
         ) : (
           <div className="mt-14 border-t border-border pt-14">
-            <SectionLabel>Coming soon</SectionLabel>
+            <SectionLabel>Articles</SectionLabel>
             <p className="display-serif mt-6 max-w-2xl text-ink">
               {query || category !== "all"
                 ? "No published stories match your search."

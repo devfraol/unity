@@ -5,6 +5,7 @@ import { programImages } from "@/lib/images";
 import { PageHeader } from "@/components/site/kit";
 import { PageTransition, ParallaxImage, Reveal } from "@/components/site/motion";
 import { CTASection } from "@/components/site/CTASection";
+import { absoluteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/programs/")({
   head: () => ({
@@ -18,14 +19,15 @@ export const Route = createFileRoute("/programs/")({
       { property: "og:title", content: "Programs & Services — Unity Welcome" },
       {
         property: "og:description",
-        content:
-          "Six programs supporting newcomers from arrival to lasting success across Canada.",
+        content: "Six programs supporting newcomers from arrival to lasting success across Canada.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/programs" },
+      { property: "og:url", content: absoluteUrl("/programs") },
+      { property: "og:image", content: absoluteUrl(programImages["settlement"]!) },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: absoluteUrl(programImages["settlement"]!) },
     ],
-    links: [{ rel: "canonical", href: "/programs" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/programs") }],
   }),
   component: ProgramsPage,
 });

@@ -1,4 +1,4 @@
-export type ProfileRole = "admin" | "editor";
+export type ProfileRole = "admin" | "editor" | "member";
 export type BlogPostStatus = "draft" | "published" | "archived";
 export type CommentStatus = "pending" | "approved" | "rejected" | "spam";
 

@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /admin/
 
-Sitemap: /sitemap.xml
+Sitemap: https://uwsettle.org/sitemap.xml

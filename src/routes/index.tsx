@@ -14,6 +14,7 @@ import {
 } from "@/components/site/motion";
 import { CTASection } from "@/components/site/CTASection";
 import { LatestFromBlog } from "@/components/blog/LatestFromBlog";
+import { absoluteUrl } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,10 +37,12 @@ export const Route = createFileRoute("/")({
           "Housing, language, employment, legal and wellness support for newcomers and multicultural communities across Canada.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/" },
+      { property: "og:url", content: absoluteUrl("/") },
+      { property: "og:image", content: absoluteUrl(heroMain) },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: absoluteUrl(heroMain) },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/") }],
     scripts: [
       {
         type: "application/ld+json",

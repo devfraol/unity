@@ -17,6 +17,7 @@ import { Footer } from "@/components/site/Footer";
 import { ScrollProgress } from "@/components/site/motion";
 import { Toaster } from "@/components/ui/sonner";
 import { org } from "@/data/site";
+import { DEFAULT_OG_IMAGE, SITE_URL } from "@/lib/seo";
 
 function NotFoundComponent() {
   return (
@@ -90,6 +91,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "author", content: org.name },
       { property: "og:site_name", content: org.name },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: DEFAULT_OG_IMAGE },
+      { name: "twitter:image", content: DEFAULT_OG_IMAGE },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#F7F5EF" },
     ],
@@ -111,6 +114,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@type": "WebSite",
           name: org.name,
           description: org.mission,
+          url: SITE_URL,
         }),
       },
     ],
