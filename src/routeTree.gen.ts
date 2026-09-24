@@ -11,27 +11,27 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as GetSupportRouteImport } from './routes/get-support'
 import { Route as ProgramsRouteImport } from './routes/programs'
 import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as StoriesRouteImport } from './routes/stories'
-import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
-import { Route as AdminCommentsRouteImport } from './routes/admin.comments'
-import { Route as AdminLoginRouteImport } from './routes/admin.login'
-import { Route as AdminMediaRouteImport } from './routes/admin.media'
+import { Route as UwCmsRouteImport } from './routes/uw-cms'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as ProgramsIndexRouteImport } from './routes/programs.index'
 import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
 import { Route as StoriesIndexRouteImport } from './routes/stories.index'
 import { Route as StoriesSlugRouteImport } from './routes/stories.$slug'
-import { Route as AdminBlogIndexRouteImport } from './routes/admin/blog.index'
-import { Route as AdminBlogNewRouteImport } from './routes/admin/blog/new'
-import { Route as AdminBlogIdEditRouteImport } from './routes/admin/blog/$id.edit'
+import { Route as UwCmsIndexRouteImport } from './routes/uw-cms.index'
+import { Route as UwCmsCategoriesRouteImport } from './routes/uw-cms.categories'
+import { Route as UwCmsCommentsRouteImport } from './routes/uw-cms.comments'
+import { Route as UwCmsLoginRouteImport } from './routes/uw-cms.login'
+import { Route as UwCmsMediaRouteImport } from './routes/uw-cms.media'
+import { Route as UwCmsBlogIndexRouteImport } from './routes/uw-cms/blog.index'
+import { Route as UwCmsBlogNewRouteImport } from './routes/uw-cms/blog/new'
+import { Route as UwCmsBlogIdEditRouteImport } from './routes/uw-cms/blog/$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -41,11 +41,6 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogRoute = BlogRouteImport.update({
@@ -78,30 +73,10 @@ const StoriesRoute = StoriesRouteImport.update({
   path: '/stories',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
-  id: '/categories',
-  path: '/categories',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminCommentsRoute = AdminCommentsRouteImport.update({
-  id: '/comments',
-  path: '/comments',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminMediaRoute = AdminMediaRouteImport.update({
-  id: '/media',
-  path: '/media',
-  getParentRoute: () => AdminRoute,
+const UwCmsRoute = UwCmsRouteImport.update({
+  id: '/uw-cms',
+  path: '/uw-cms',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/',
@@ -133,46 +108,71 @@ const StoriesSlugRoute = StoriesSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => StoriesRoute,
 } as any)
-const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
+const UwCmsIndexRoute = UwCmsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => UwCmsRoute,
+} as any)
+const UwCmsCategoriesRoute = UwCmsCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => UwCmsRoute,
+} as any)
+const UwCmsCommentsRoute = UwCmsCommentsRouteImport.update({
+  id: '/comments',
+  path: '/comments',
+  getParentRoute: () => UwCmsRoute,
+} as any)
+const UwCmsLoginRoute = UwCmsLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => UwCmsRoute,
+} as any)
+const UwCmsMediaRoute = UwCmsMediaRouteImport.update({
+  id: '/media',
+  path: '/media',
+  getParentRoute: () => UwCmsRoute,
+} as any)
+const UwCmsBlogIndexRoute = UwCmsBlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
-  getParentRoute: () => AdminRoute,
+  getParentRoute: () => UwCmsRoute,
 } as any)
-const AdminBlogNewRoute = AdminBlogNewRouteImport.update({
+const UwCmsBlogNewRoute = UwCmsBlogNewRouteImport.update({
   id: '/blog/new',
   path: '/blog/new',
-  getParentRoute: () => AdminRoute,
+  getParentRoute: () => UwCmsRoute,
 } as any)
-const AdminBlogIdEditRoute = AdminBlogIdEditRouteImport.update({
+const UwCmsBlogIdEditRoute = UwCmsBlogIdEditRouteImport.update({
   id: '/blog/$id/edit',
   path: '/blog/$id/edit',
-  getParentRoute: () => AdminRoute,
+  getParentRoute: () => UwCmsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRouteWithChildren
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
   '/get-support': typeof GetSupportRoute
   '/programs': typeof ProgramsRouteWithChildren
   '/resources': typeof ResourcesRoute
   '/stories': typeof StoriesRouteWithChildren
-  '/admin/categories': typeof AdminCategoriesRoute
-  '/admin/comments': typeof AdminCommentsRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/admin/media': typeof AdminMediaRoute
+  '/uw-cms': typeof UwCmsRouteWithChildren
   '/blog/$slug': typeof BlogSlugRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/stories/$slug': typeof StoriesSlugRoute
-  '/admin/': typeof AdminIndexRoute
+  '/uw-cms/categories': typeof UwCmsCategoriesRoute
+  '/uw-cms/comments': typeof UwCmsCommentsRoute
+  '/uw-cms/login': typeof UwCmsLoginRoute
+  '/uw-cms/media': typeof UwCmsMediaRoute
   '/blog/': typeof BlogIndexRoute
   '/programs/': typeof ProgramsIndexRoute
   '/stories/': typeof StoriesIndexRoute
-  '/admin/blog/new': typeof AdminBlogNewRoute
-  '/admin/blog/': typeof AdminBlogIndexRoute
-  '/admin/blog/$id/edit': typeof AdminBlogIdEditRoute
+  '/uw-cms/': typeof UwCmsIndexRoute
+  '/uw-cms/blog/new': typeof UwCmsBlogNewRoute
+  '/uw-cms/blog/': typeof UwCmsBlogIndexRoute
+  '/uw-cms/blog/$id/edit': typeof UwCmsBlogIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -180,73 +180,73 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/get-support': typeof GetSupportRoute
   '/resources': typeof ResourcesRoute
-  '/admin/categories': typeof AdminCategoriesRoute
-  '/admin/comments': typeof AdminCommentsRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/admin/media': typeof AdminMediaRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/stories/$slug': typeof StoriesSlugRoute
-  '/admin': typeof AdminIndexRoute
+  '/uw-cms/categories': typeof UwCmsCategoriesRoute
+  '/uw-cms/comments': typeof UwCmsCommentsRoute
+  '/uw-cms/login': typeof UwCmsLoginRoute
+  '/uw-cms/media': typeof UwCmsMediaRoute
   '/blog': typeof BlogIndexRoute
   '/programs': typeof ProgramsIndexRoute
   '/stories': typeof StoriesIndexRoute
-  '/admin/blog/new': typeof AdminBlogNewRoute
-  '/admin/blog': typeof AdminBlogIndexRoute
-  '/admin/blog/$id/edit': typeof AdminBlogIdEditRoute
+  '/uw-cms': typeof UwCmsIndexRoute
+  '/uw-cms/blog/new': typeof UwCmsBlogNewRoute
+  '/uw-cms/blog': typeof UwCmsBlogIndexRoute
+  '/uw-cms/blog/$id/edit': typeof UwCmsBlogIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRouteWithChildren
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
   '/get-support': typeof GetSupportRoute
   '/programs': typeof ProgramsRouteWithChildren
   '/resources': typeof ResourcesRoute
   '/stories': typeof StoriesRouteWithChildren
-  '/admin/categories': typeof AdminCategoriesRoute
-  '/admin/comments': typeof AdminCommentsRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/admin/media': typeof AdminMediaRoute
+  '/uw-cms': typeof UwCmsRouteWithChildren
   '/blog/$slug': typeof BlogSlugRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/stories/$slug': typeof StoriesSlugRoute
-  '/admin/': typeof AdminIndexRoute
+  '/uw-cms/categories': typeof UwCmsCategoriesRoute
+  '/uw-cms/comments': typeof UwCmsCommentsRoute
+  '/uw-cms/login': typeof UwCmsLoginRoute
+  '/uw-cms/media': typeof UwCmsMediaRoute
   '/blog/': typeof BlogIndexRoute
   '/programs/': typeof ProgramsIndexRoute
   '/stories/': typeof StoriesIndexRoute
-  '/admin/blog/new': typeof AdminBlogNewRoute
-  '/admin/blog/': typeof AdminBlogIndexRoute
-  '/admin/blog/$id/edit': typeof AdminBlogIdEditRoute
+  '/uw-cms/': typeof UwCmsIndexRoute
+  '/uw-cms/blog/new': typeof UwCmsBlogNewRoute
+  '/uw-cms/blog/': typeof UwCmsBlogIndexRoute
+  '/uw-cms/blog/$id/edit': typeof UwCmsBlogIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/about'
-    | '/admin'
     | '/blog'
     | '/contact'
     | '/get-support'
     | '/programs'
     | '/resources'
     | '/stories'
-    | '/admin/categories'
-    | '/admin/comments'
-    | '/admin/login'
-    | '/admin/media'
+    | '/uw-cms'
     | '/blog/$slug'
     | '/programs/$slug'
     | '/stories/$slug'
-    | '/admin/'
+    | '/uw-cms/categories'
+    | '/uw-cms/comments'
+    | '/uw-cms/login'
+    | '/uw-cms/media'
     | '/blog/'
     | '/programs/'
     | '/stories/'
-    | '/admin/blog/new'
-    | '/admin/blog/'
-    | '/admin/blog/$id/edit'
+    | '/uw-cms/'
+    | '/uw-cms/blog/new'
+    | '/uw-cms/blog/'
+    | '/uw-cms/blog/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -254,57 +254,57 @@ export interface FileRouteTypes {
     | '/contact'
     | '/get-support'
     | '/resources'
-    | '/admin/categories'
-    | '/admin/comments'
-    | '/admin/login'
-    | '/admin/media'
     | '/blog/$slug'
     | '/programs/$slug'
     | '/stories/$slug'
-    | '/admin'
+    | '/uw-cms/categories'
+    | '/uw-cms/comments'
+    | '/uw-cms/login'
+    | '/uw-cms/media'
     | '/blog'
     | '/programs'
     | '/stories'
-    | '/admin/blog/new'
-    | '/admin/blog'
-    | '/admin/blog/$id/edit'
+    | '/uw-cms'
+    | '/uw-cms/blog/new'
+    | '/uw-cms/blog'
+    | '/uw-cms/blog/$id/edit'
   id:
     | '__root__'
     | '/'
     | '/about'
-    | '/admin'
     | '/blog'
     | '/contact'
     | '/get-support'
     | '/programs'
     | '/resources'
     | '/stories'
-    | '/admin/categories'
-    | '/admin/comments'
-    | '/admin/login'
-    | '/admin/media'
+    | '/uw-cms'
     | '/blog/$slug'
     | '/programs/$slug'
     | '/stories/$slug'
-    | '/admin/'
+    | '/uw-cms/categories'
+    | '/uw-cms/comments'
+    | '/uw-cms/login'
+    | '/uw-cms/media'
     | '/blog/'
     | '/programs/'
     | '/stories/'
-    | '/admin/blog/new'
-    | '/admin/blog/'
-    | '/admin/blog/$id/edit'
+    | '/uw-cms/'
+    | '/uw-cms/blog/new'
+    | '/uw-cms/blog/'
+    | '/uw-cms/blog/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AdminRoute: typeof AdminRouteWithChildren
   BlogRoute: typeof BlogRouteWithChildren
   ContactRoute: typeof ContactRoute
   GetSupportRoute: typeof GetSupportRoute
   ProgramsRoute: typeof ProgramsRouteWithChildren
   ResourcesRoute: typeof ResourcesRoute
   StoriesRoute: typeof StoriesRouteWithChildren
+  UwCmsRoute: typeof UwCmsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -321,13 +321,6 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog': {
@@ -372,40 +365,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/': {
-      id: '/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/categories': {
-      id: '/admin/categories'
-      path: '/categories'
-      fullPath: '/admin/categories'
-      preLoaderRoute: typeof AdminCategoriesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/comments': {
-      id: '/admin/comments'
-      path: '/comments'
-      fullPath: '/admin/comments'
-      preLoaderRoute: typeof AdminCommentsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/login': {
-      id: '/admin/login'
-      path: '/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/media': {
-      id: '/admin/media'
-      path: '/media'
-      fullPath: '/admin/media'
-      preLoaderRoute: typeof AdminMediaRouteImport
-      parentRoute: typeof AdminRoute
+    '/uw-cms': {
+      id: '/uw-cms'
+      path: '/uw-cms'
+      fullPath: '/uw-cms'
+      preLoaderRoute: typeof UwCmsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/blog/': {
       id: '/blog/'
@@ -449,53 +414,64 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoriesSlugRouteImport
       parentRoute: typeof StoriesRoute
     }
-    '/admin/blog/': {
-      id: '/admin/blog/'
+    '/uw-cms/': {
+      id: '/uw-cms/'
+      path: '/'
+      fullPath: '/uw-cms/'
+      preLoaderRoute: typeof UwCmsIndexRouteImport
+      parentRoute: typeof UwCmsRoute
+    }
+    '/uw-cms/categories': {
+      id: '/uw-cms/categories'
+      path: '/categories'
+      fullPath: '/uw-cms/categories'
+      preLoaderRoute: typeof UwCmsCategoriesRouteImport
+      parentRoute: typeof UwCmsRoute
+    }
+    '/uw-cms/comments': {
+      id: '/uw-cms/comments'
+      path: '/comments'
+      fullPath: '/uw-cms/comments'
+      preLoaderRoute: typeof UwCmsCommentsRouteImport
+      parentRoute: typeof UwCmsRoute
+    }
+    '/uw-cms/login': {
+      id: '/uw-cms/login'
+      path: '/login'
+      fullPath: '/uw-cms/login'
+      preLoaderRoute: typeof UwCmsLoginRouteImport
+      parentRoute: typeof UwCmsRoute
+    }
+    '/uw-cms/media': {
+      id: '/uw-cms/media'
+      path: '/media'
+      fullPath: '/uw-cms/media'
+      preLoaderRoute: typeof UwCmsMediaRouteImport
+      parentRoute: typeof UwCmsRoute
+    }
+    '/uw-cms/blog/': {
+      id: '/uw-cms/blog/'
       path: '/blog'
-      fullPath: '/admin/blog/'
-      preLoaderRoute: typeof AdminBlogIndexRouteImport
-      parentRoute: typeof AdminRoute
+      fullPath: '/uw-cms/blog/'
+      preLoaderRoute: typeof UwCmsBlogIndexRouteImport
+      parentRoute: typeof UwCmsRoute
     }
-    '/admin/blog/new': {
-      id: '/admin/blog/new'
+    '/uw-cms/blog/new': {
+      id: '/uw-cms/blog/new'
       path: '/blog/new'
-      fullPath: '/admin/blog/new'
-      preLoaderRoute: typeof AdminBlogNewRouteImport
-      parentRoute: typeof AdminRoute
+      fullPath: '/uw-cms/blog/new'
+      preLoaderRoute: typeof UwCmsBlogNewRouteImport
+      parentRoute: typeof UwCmsRoute
     }
-    '/admin/blog/$id/edit': {
-      id: '/admin/blog/$id/edit'
+    '/uw-cms/blog/$id/edit': {
+      id: '/uw-cms/blog/$id/edit'
       path: '/blog/$id/edit'
-      fullPath: '/admin/blog/$id/edit'
-      preLoaderRoute: typeof AdminBlogIdEditRouteImport
-      parentRoute: typeof AdminRoute
+      fullPath: '/uw-cms/blog/$id/edit'
+      preLoaderRoute: typeof UwCmsBlogIdEditRouteImport
+      parentRoute: typeof UwCmsRoute
     }
   }
 }
-
-interface AdminRouteChildren {
-  AdminCategoriesRoute: typeof AdminCategoriesRoute
-  AdminCommentsRoute: typeof AdminCommentsRoute
-  AdminLoginRoute: typeof AdminLoginRoute
-  AdminMediaRoute: typeof AdminMediaRoute
-  AdminIndexRoute: typeof AdminIndexRoute
-  AdminBlogNewRoute: typeof AdminBlogNewRoute
-  AdminBlogIndexRoute: typeof AdminBlogIndexRoute
-  AdminBlogIdEditRoute: typeof AdminBlogIdEditRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminCategoriesRoute: AdminCategoriesRoute,
-  AdminCommentsRoute: AdminCommentsRoute,
-  AdminLoginRoute: AdminLoginRoute,
-  AdminMediaRoute: AdminMediaRoute,
-  AdminIndexRoute: AdminIndexRoute,
-  AdminBlogNewRoute: AdminBlogNewRoute,
-  AdminBlogIndexRoute: AdminBlogIndexRoute,
-  AdminBlogIdEditRoute: AdminBlogIdEditRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface BlogRouteChildren {
   BlogSlugRoute: typeof BlogSlugRoute
@@ -536,16 +512,40 @@ const StoriesRouteChildren: StoriesRouteChildren = {
 const StoriesRouteWithChildren =
   StoriesRoute._addFileChildren(StoriesRouteChildren)
 
+interface UwCmsRouteChildren {
+  UwCmsCategoriesRoute: typeof UwCmsCategoriesRoute
+  UwCmsCommentsRoute: typeof UwCmsCommentsRoute
+  UwCmsLoginRoute: typeof UwCmsLoginRoute
+  UwCmsMediaRoute: typeof UwCmsMediaRoute
+  UwCmsIndexRoute: typeof UwCmsIndexRoute
+  UwCmsBlogNewRoute: typeof UwCmsBlogNewRoute
+  UwCmsBlogIndexRoute: typeof UwCmsBlogIndexRoute
+  UwCmsBlogIdEditRoute: typeof UwCmsBlogIdEditRoute
+}
+
+const UwCmsRouteChildren: UwCmsRouteChildren = {
+  UwCmsCategoriesRoute: UwCmsCategoriesRoute,
+  UwCmsCommentsRoute: UwCmsCommentsRoute,
+  UwCmsLoginRoute: UwCmsLoginRoute,
+  UwCmsMediaRoute: UwCmsMediaRoute,
+  UwCmsIndexRoute: UwCmsIndexRoute,
+  UwCmsBlogNewRoute: UwCmsBlogNewRoute,
+  UwCmsBlogIndexRoute: UwCmsBlogIndexRoute,
+  UwCmsBlogIdEditRoute: UwCmsBlogIdEditRoute,
+}
+
+const UwCmsRouteWithChildren = UwCmsRoute._addFileChildren(UwCmsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AdminRoute: AdminRouteWithChildren,
   BlogRoute: BlogRouteWithChildren,
   ContactRoute: ContactRoute,
   GetSupportRoute: GetSupportRoute,
   ProgramsRoute: ProgramsRouteWithChildren,
   ResourcesRoute: ResourcesRoute,
   StoriesRoute: StoriesRouteWithChildren,
+  UwCmsRoute: UwCmsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

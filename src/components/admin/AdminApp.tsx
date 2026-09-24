@@ -56,16 +56,16 @@ import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import type { BlogPost, Category, Comment, Profile } from "@/types/database";
 
 const navGroups = [
-  { label: "Overview", items: [["/admin", "Dashboard", LayoutDashboard]] },
+  { label: "Overview", items: [["/uw-cms", "Dashboard", LayoutDashboard]] },
   {
     label: "Content",
     items: [
-      ["/admin/blog", "Blog posts", FileText],
-      ["/admin/categories", "Categories", Tags],
-      ["/admin/media", "Media", ImageIcon],
+      ["/uw-cms/blog", "Blog posts", FileText],
+      ["/uw-cms/categories", "Categories", Tags],
+      ["/uw-cms/media", "Media", ImageIcon],
     ],
   },
-  { label: "Engagement", items: [["/admin/comments", "Comments", MessageSquare]] },
+  { label: "Engagement", items: [["/uw-cms/comments", "Comments", MessageSquare]] },
 ] as const;
 const slugify = (value: string) =>
   value
@@ -112,11 +112,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
       .then((p) => {
         setProfile(p);
         if (!p || !["admin", "editor"].includes(p.role))
-          navigate({ to: "/admin/login", replace: true });
+          navigate({ to: "/uw-cms/login", replace: true });
       })
       .catch(() => {
         setProfile(null);
-        navigate({ to: "/admin/login", replace: true });
+        navigate({ to: "/uw-cms/login", replace: true });
       });
   }, [navigate]);
   if (profile === undefined)
@@ -132,7 +132,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await signOut();
-      navigate({ to: "/admin/login" });
+      navigate({ to: "/uw-cms/login" });
     } catch {
       toast.error("We couldn't sign you out. Please try again.");
     }
@@ -240,6 +240,23 @@ export function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+
+    getCurrentProfile()
+      .then((profile) => {
+        if (active && profile && ["admin", "editor"].includes(profile.role)) {
+          navigate({ to: "/uw-cms", replace: true });
+        }
+      })
+      .catch(() => {
+        // Visitors without a valid session remain on the sign-in page.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
@@ -255,7 +272,7 @@ export function AdminLogin() {
         await signOut();
         throw new Error("not authorized");
       }
-      navigate({ to: "/admin" });
+      navigate({ to: "/uw-cms" });
     } catch (err) {
       setError(userMessage(err));
     } finally {
@@ -430,7 +447,7 @@ export function Dashboard() {
         text="Overview of your website content and activity."
         action={
           <Button asChild>
-            <Link to="/admin/blog/new">
+            <Link to="/uw-cms/blog/new">
               <Plus />
               New post
             </Link>
@@ -457,7 +474,7 @@ export function Dashboard() {
             posts.slice(0, 5).map((p) => (
               <Link
                 key={p.id}
-                to="/admin/blog/$id/edit"
+                to="/uw-cms/blog/$id/edit"
                 params={{ id: p.id }}
                 className="flex items-center justify-between gap-3 border-t py-3 text-sm first:border-t-0 hover:text-primary"
               >
@@ -471,7 +488,7 @@ export function Dashboard() {
               text="Create your first story to start building the blog."
               action={
                 <Button size="sm" asChild>
-                  <Link to="/admin/blog/new">
+                  <Link to="/uw-cms/blog/new">
                     <Plus />
                     Create post
                   </Link>
@@ -485,7 +502,7 @@ export function Dashboard() {
             comments.slice(0, 5).map((c) => (
               <Link
                 key={c.id}
-                to="/admin/comments"
+                to="/uw-cms/comments"
                 className="block border-t py-3 first:border-t-0 hover:text-primary"
               >
                 <div className="flex justify-between gap-3">
@@ -549,7 +566,7 @@ export function BlogList() {
         text="Create, manage and publish Unity Welcome stories."
         action={
           <Button asChild>
-            <Link to="/admin/blog/new">
+            <Link to="/uw-cms/blog/new">
               <Plus />
               New post
             </Link>
@@ -604,7 +621,7 @@ export function BlogList() {
           action={
             !posts.length ? (
               <Button asChild>
-                <Link to="/admin/blog/new">
+                <Link to="/uw-cms/blog/new">
                   <Plus />
                   Create post
                 </Link>
@@ -681,7 +698,7 @@ function PostActions({
   return (
     <div className="flex flex-wrap gap-2">
       <Button variant="outline" size="sm" asChild>
-        <Link to="/admin/blog/$id/edit" params={{ id: post.id }}>
+        <Link to="/uw-cms/blog/$id/edit" params={{ id: post.id }}>
           <PenLine />
           Edit
         </Link>
@@ -761,7 +778,7 @@ export function PostEditor({ id }: { id?: string }) {
         .then((p) => {
           if (!p) {
             toast.error("Post not found.");
-            nav({ to: "/admin/blog" });
+            nav({ to: "/uw-cms/blog" });
             return;
           }
           setForm({
@@ -818,7 +835,7 @@ export function PostEditor({ id }: { id?: string }) {
             ? "Post archived."
             : "Draft saved.",
       );
-      nav({ to: "/admin/blog" });
+      nav({ to: "/uw-cms/blog" });
     } catch (e) {
       toast.error(userMessage(e));
     } finally {

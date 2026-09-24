@@ -1,3 +1,3 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Comments } from "@/components/admin/AdminApp";
-export const Route = createFileRoute("/admin/comments")({ component: Comments });
+export const Route = createFileRoute("/uw-cms/comments")({ component: Comments });
