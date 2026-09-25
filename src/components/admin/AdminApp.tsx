@@ -173,7 +173,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-cream text-foreground">
       <aside
-        className={`${mobile ? "fixed inset-y-0 left-0 z-50 flex" : "hidden md:flex"} w-60 flex-col border-r bg-background p-4`}
+        className={`${mobile ? "fixed inset-y-0 left-0 z-50 flex" : "hidden md:fixed md:inset-y-0 md:left-0 md:flex"} w-60 flex-col border-r bg-background p-4`}
       >
         {navigation}
         <ProfileArea profile={profile} logout={logout} />
