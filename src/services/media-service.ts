@@ -46,3 +46,23 @@ export async function deleteBlogImage(path: string): Promise<void> {
   const { error } = await supabase.storage.from(BUCKET).remove([path]);
   if (error) throw toServiceError(error);
 }
+
+export type MediaImage = { path: string; name: string; publicUrl: string };
+
+export async function listBlogImages(): Promise<MediaImage[]> {
+  const { data, error } = await supabase.storage.from(BUCKET).list("uploads", {
+    limit: 100,
+    sortBy: { column: "created_at", order: "desc" },
+  });
+  if (error) throw toServiceError(error);
+  return data
+    .filter((item) => item.name && item.id)
+    .map((item) => {
+      const path = `uploads/${item.name}`;
+      return {
+        path,
+        name: item.name,
+        publicUrl: supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl,
+      };
+    });
+}
