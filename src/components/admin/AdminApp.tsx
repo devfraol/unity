@@ -45,7 +45,12 @@ import {
   markCommentAsSpam,
   rejectComment,
 } from "@/services/comment-service";
-import { uploadBlogImage } from "@/services/media-service";
+import {
+  deleteBlogImage,
+  listBlogImages,
+  uploadBlogImage,
+  type MediaImage,
+} from "@/services/media-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -80,7 +85,7 @@ const fmt = (value: string | null) =>
         day: "numeric",
         year: "numeric",
       }).format(new Date(value))
-    : "Not published";
+    : "—";
 const userMessage = (error: unknown) => {
   const message = error instanceof Error ? error.message.toLowerCase() : "";
   if (message.includes("authorized")) return "This account is not authorized to access the CMS.";
@@ -96,7 +101,7 @@ const userMessage = (error: unknown) => {
 };
 const StatusBadge = ({ status }: { status: string }) => (
   <span
-    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${status === "published" || status === "approved" ? "bg-primary/10 text-primary" : status === "pending" ? "bg-gold/20 text-foreground" : status === "spam" || status === "rejected" || status === "archived" ? "bg-muted text-muted-foreground" : "bg-clay/10 text-clay"}`}
+    className={`inline-flex rounded-sm border px-2 py-0.5 text-[11px] font-semibold capitalize ${status === "published" || status === "approved" ? "border-primary/20 bg-primary/10 text-primary" : status === "pending" ? "border-gold/50 bg-gold/15 text-foreground" : status === "draft" ? "border-clay/20 bg-clay/10 text-clay" : "border-border bg-muted text-muted-foreground"}`}
   >
     {status}
   </span>
@@ -105,7 +110,7 @@ const StatusBadge = ({ status }: { status: string }) => (
 export function AdminShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
+  const [profile, setProfile] = useState<Profile | null | undefined>();
   const [mobile, setMobile] = useState(false);
   useEffect(() => {
     getCurrentProfile()
@@ -121,11 +126,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }, [navigate]);
   if (profile === undefined)
     return (
-      <div className="grid min-h-screen place-items-center bg-muted/30 text-sm text-muted-foreground">
-        <div className="flex items-center gap-3">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-clay" />
-          Opening secure CMS…
-        </div>
+      <div className="grid min-h-screen place-items-center bg-cream text-sm text-muted-foreground">
+        Opening secure CMS…
       </div>
     );
   if (!profile) return null;
@@ -143,15 +145,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <img src={logo} alt="Unity Welcome" className="h-9 w-9 object-contain" />
         <div>
           <p className="text-sm font-bold tracking-tight">Unity Welcome</p>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-clay">
-            Content studio
-          </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-clay">CMS</p>
         </div>
       </div>
       <nav className="space-y-6" aria-label="CMS navigation">
         {navGroups.map((group) => (
           <div key={group.label}>
-            <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.13em] text-muted-foreground">
+            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
               {group.label}
             </p>
             {group.items.map(([to, label, Icon]) => (
@@ -159,9 +159,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 key={to}
                 to={to}
                 onClick={() => setMobile(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${path === to ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${path === to ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
               >
-                <Icon size={17} aria-hidden="true" />
+                <Icon size={16} aria-hidden="true" />
                 {label}
               </Link>
             ))}
@@ -171,9 +171,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
     </>
   );
   return (
-    <div className="min-h-screen bg-muted/30 text-foreground">
+    <div className="min-h-screen bg-cream text-foreground">
       <aside
-        className={`${mobile ? "fixed inset-y-0 left-0 z-50 flex" : "hidden md:flex"} w-72 flex-col border-r bg-background p-5 shadow-xl shadow-foreground/5 md:shadow-none`}
+        className={`${mobile ? "fixed inset-y-0 left-0 z-50 flex" : "hidden md:flex"} w-60 flex-col border-r bg-background p-4`}
       >
         {navigation}
         <ProfileArea profile={profile} logout={logout} />
@@ -182,28 +182,24 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <button
           aria-label="Close navigation"
           onClick={() => setMobile(false)}
-          className="fixed inset-0 z-40 bg-foreground/25 backdrop-blur-[1px] md:hidden"
+          className="fixed inset-0 z-40 bg-ink/30 md:hidden"
         />
       )}
-      <div className="md:pl-72">
-        <header className="flex h-16 items-center border-b bg-background px-4 sm:px-6">
+      <div className="md:pl-60">
+        <div className="flex h-14 items-center border-b bg-background px-4 md:hidden">
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
             onClick={() => setMobile(true)}
             aria-label="Open navigation"
           >
             <Menu />
           </Button>
-          <div className="ml-auto flex items-center gap-2 text-sm">
-            <span className="hidden text-muted-foreground sm:inline">Signed in as</span>
-            <span className="rounded-full bg-muted px-3 py-1.5 font-medium">
-              {profile.full_name || "Staff member"}
-            </span>
-          </div>
-        </header>
-        <main className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">{children}</main>
+          <span className="ml-2 text-sm font-semibold">Unity Welcome CMS</span>
+        </div>
+        <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-7 lg:px-10 lg:py-8">
+          {children}
+        </main>
       </div>
       <Toaster richColors />
     </div>
@@ -213,7 +209,7 @@ function ProfileArea({ profile, logout }: { profile: Profile; logout: () => void
   return (
     <div className="mt-auto border-t pt-4">
       <div className="mb-3 flex items-center gap-3 px-2">
-        <div className="grid h-9 w-9 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+        <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
           {(profile.full_name || "S").slice(0, 1).toUpperCase()}
         </div>
         <div className="min-w-0">
@@ -242,27 +238,19 @@ export function AdminLogin() {
   const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
-
     getCurrentProfile()
-      .then((profile) => {
-        if (active && profile && ["admin", "editor"].includes(profile.role)) {
+      .then((p) => {
+        if (active && p && ["admin", "editor"].includes(p.role))
           navigate({ to: "/uw-cms", replace: true });
-        }
       })
-      .catch(() => {
-        // Visitors without a valid session remain on the sign-in page.
-      });
-
+      .catch(() => undefined);
     return () => {
       active = false;
     };
   }, [navigate]);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError("Enter your email and password.");
-      return;
-    }
+    if (!email || !password) return setError("Enter your email and password.");
     setError("");
     setLoading(true);
     try {
@@ -280,40 +268,40 @@ export function AdminLogin() {
     }
   };
   return (
-    <div className="min-h-screen bg-muted/40 lg:grid lg:grid-cols-[1.05fr_.95fr]">
-      <aside className="relative hidden overflow-hidden bg-ink p-10 text-ink-foreground lg:flex lg:flex-col">
-        <div className="absolute inset-0 opacity-15 [background:radial-gradient(circle_at_20%_20%,var(--color-gold),transparent_30%),radial-gradient(circle_at_90%_80%,var(--color-clay),transparent_38%)]" />
-        <div className="relative flex items-center gap-3">
+    <div className="min-h-screen bg-cream lg:grid lg:grid-cols-2">
+      <aside className="hidden border-r bg-ink p-12 text-ink-foreground lg:flex lg:flex-col">
+        <div className="flex items-center gap-3">
           <img
             src={logo}
             alt="Unity Welcome"
-            className="h-11 w-11 rounded-full bg-cream p-1 object-contain"
+            className="h-10 w-10 rounded-full bg-cream p-1 object-contain"
           />
-          <span className="font-bold">Unity Welcome</span>
+          <span className="font-semibold">Unity Welcome</span>
         </div>
-        <div className="relative my-auto max-w-md">
-          <p className="label-eyebrow text-gold">Settlement Agency</p>
-          <h1 className="mt-5 font-display text-5xl leading-tight">
-            Carefully sharing the stories that strengthen our community.
+        <div className="my-auto max-w-lg border-l-2 border-gold pl-6">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gold">
+            Settlement Agency
+          </p>
+          <h1 className="mt-5 font-display text-5xl leading-[1.08]">
+            A careful home for community stories.
           </h1>
-          <p className="mt-6 max-w-sm leading-7 text-ink-foreground/75">
-            A secure workspace for the people who keep Unity Welcome’s resources, stories, and
+          <p className="mt-6 max-w-md text-sm leading-7 text-ink-foreground/70">
+            Secure tools for the team that keeps Unity Welcome’s resources, stories, and
             conversations current.
           </p>
         </div>
-        <p className="relative text-sm text-ink-foreground/60">Unity Welcome Settlement Agency</p>
+        <p className="text-xs text-ink-foreground/55">Unity Welcome Settlement Agency</p>
       </aside>
-      <main className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-8">
-        <form
-          onSubmit={submit}
-          className="w-full max-w-md rounded-2xl border bg-background p-6 shadow-xl shadow-foreground/5 sm:p-9"
-        >
-          <div className="mb-8">
-            <div className="mb-6 flex items-center gap-3 lg:hidden">
+      <main className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-10">
+        <form onSubmit={submit} className="w-full max-w-md">
+          <div className="mb-9">
+            <div className="mb-7 flex items-center gap-3 lg:hidden">
               <img src={logo} alt="Unity Welcome" className="h-10 w-10 object-contain" />
-              <span className="font-bold">Unity Welcome</span>
+              <span className="font-semibold">Unity Welcome</span>
             </div>
-            <p className="label-eyebrow text-clay">Staff portal</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-clay">
+              Staff portal
+            </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight">Welcome back</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Sign in with your authorized staff account to continue.
@@ -322,7 +310,7 @@ export function AdminLogin() {
           {error && (
             <div
               role="alert"
-              className="mb-5 flex gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+              className="mb-5 flex gap-2 border-l-2 border-destructive bg-destructive/5 p-3 text-sm text-destructive"
             >
               <X className="mt-0.5 shrink-0" size={16} />
               {error}
@@ -357,7 +345,7 @@ export function AdminLogin() {
                 variant="ghost"
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2"
-                onClick={() => setShowPassword((value) => !value)}
+                onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -380,14 +368,13 @@ export function AdminLogin() {
 }
 
 const Title = ({ title, text, action }: { title: string; text: string; action?: ReactNode }) => (
-  <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+  <header className="mb-7 flex flex-wrap items-end justify-between gap-4 border-b pb-5">
     <div>
-      <p className="label-eyebrow mb-2 text-clay">Content management</p>
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{text}</p>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+      <p className="mt-1.5 text-sm text-muted-foreground">{text}</p>
     </div>
     {action}
-  </div>
+  </header>
 );
 const Panel = ({
   title,
@@ -398,13 +385,15 @@ const Panel = ({
   children: ReactNode;
   className?: string;
 }) => (
-  <section className={`rounded-xl border bg-background p-5 shadow-sm ${className}`}>
-    <h2 className="mb-3 font-semibold">{title}</h2>
-    {children}
+  <section className={`border bg-background ${className}`}>
+    <div className="border-b px-5 py-3">
+      <h2 className="text-sm font-semibold">{title}</h2>
+    </div>
+    <div className="p-5">{children}</div>
   </section>
 );
 const Empty = ({ title, text, action }: { title: string; text: string; action?: ReactNode }) => (
-  <div className="rounded-xl border border-dashed bg-background p-8 text-center">
+  <div className="border border-dashed bg-background px-6 py-10 text-center">
     <p className="font-semibold">{title}</p>
     <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">{text}</p>
     {action && <div className="mt-4">{action}</div>}
@@ -413,7 +402,7 @@ const Empty = ({ title, text, action }: { title: string; text: string; action?: 
 const ErrorNotice = ({ text }: { text: string }) => (
   <div
     role="alert"
-    className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+    className="border-l-2 border-destructive bg-destructive/5 p-4 text-sm text-destructive"
   >
     {text}
   </div>
@@ -422,23 +411,22 @@ const ErrorNotice = ({ text }: { text: string }) => (
 export function Dashboard() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
   useEffect(() => {
-    Promise.all([getPostsForAdmin(), getCommentsForModeration(), getCategories()])
-      .then(([p, c, ca]) => {
+    Promise.all([getPostsForAdmin(), getCommentsForModeration()])
+      .then(([p, c]) => {
         setPosts(p);
         setComments(c);
-        setCategories(ca);
       })
       .catch(() => setError("We couldn't load the dashboard. Please refresh and try again."));
   }, []);
   if (error) return <ErrorNotice text={error} />;
+  const pending = comments.filter((c) => c.status === "pending");
   const stats = [
-    ["Published posts", posts.filter((x) => x.status === "published").length],
-    ["Drafts", posts.filter((x) => x.status === "draft").length],
-    ["Pending comments", comments.filter((x) => x.status === "pending").length],
-    ["Categories", categories.length],
+    ["Published", posts.filter((p) => p.status === "published").length],
+    ["Drafts", posts.filter((p) => p.status === "draft").length],
+    ["Pending comments", pending.length],
+    ["Posts with images", posts.filter((p) => p.cover_image).length],
   ];
   return (
     <section>
@@ -454,34 +442,58 @@ export function Dashboard() {
           </Button>
         }
       />
-      <div className="mb-7 rounded-xl border bg-primary px-5 py-6 text-primary-foreground shadow-sm sm:px-7">
-        <p className="label-eyebrow text-primary-foreground/70">Workspace overview</p>
-        <h2 className="mt-2 text-xl font-bold">
-          Keep Unity Welcome’s stories useful, accurate, and ready to share.
-        </h2>
+      <div className="mb-7 flex flex-col justify-between gap-4 border-l-2 border-clay bg-background px-5 py-4 sm:flex-row sm:items-center">
+        <div>
+          <p className="text-sm font-semibold">Welcome back</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage Unity Welcome’s content, stories and community activity.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/uw-cms/comments">Manage comments</Link>
+          </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/uw-cms/media">Upload media</Link>
+          </Button>
+        </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid border border-b-0 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map(([label, value]) => (
-          <div key={String(label)} className="rounded-xl border bg-background p-5 shadow-sm">
-            <p className="text-sm font-medium text-muted-foreground">{label}</p>
-            <p className="mt-2 text-3xl font-bold tabular-nums">{value}</p>
+          <div key={String(label)} className="border-b px-5 py-4 xl:border-r xl:last:border-r-0">
+            <p className="text-xs font-medium text-muted-foreground">{label}</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
           </div>
         ))}
       </div>
-      <div className="mt-7 grid gap-6 lg:grid-cols-2">
+      <div className="mt-7 grid gap-6 xl:grid-cols-[1.45fr_1fr]">
         <Panel title="Recent posts">
           {posts.length ? (
-            posts.slice(0, 5).map((p) => (
-              <Link
-                key={p.id}
-                to="/uw-cms/blog/$id/edit"
-                params={{ id: p.id }}
-                className="flex items-center justify-between gap-3 border-t py-3 text-sm first:border-t-0 hover:text-primary"
-              >
-                <span className="min-w-0 truncate font-medium">{p.title}</span>
-                <StatusBadge status={p.status} />
-              </Link>
-            ))
+            <div className="divide-y">
+              {posts.slice(0, 5).map((p) => (
+                <Link
+                  key={p.id}
+                  to="/uw-cms/blog/$id/edit"
+                  params={{ id: p.id }}
+                  className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 hover:text-primary"
+                >
+                  {p.cover_image ? (
+                    <img src={p.cover_image} alt="" className="h-10 w-14 shrink-0 object-cover" />
+                  ) : (
+                    <div className="grid h-10 w-14 shrink-0 place-items-center bg-muted text-muted-foreground">
+                      <FileText size={15} />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{p.title}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Updated {fmt(p.updated_at)}
+                    </p>
+                  </div>
+                  <StatusBadge status={p.status} />
+                </Link>
+              ))}
+            </div>
           ) : (
             <Empty
               title="No posts yet"
@@ -497,25 +509,27 @@ export function Dashboard() {
             />
           )}
         </Panel>
-        <Panel title="Recent comments">
-          {comments.length ? (
-            comments.slice(0, 5).map((c) => (
-              <Link
-                key={c.id}
-                to="/uw-cms/comments"
-                className="block border-t py-3 first:border-t-0 hover:text-primary"
-              >
-                <div className="flex justify-between gap-3">
-                  <span className="font-medium">{c.name}</span>
-                  <StatusBadge status={c.status} />
-                </div>
-                <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{c.content}</p>
-              </Link>
-            ))
+        <Panel title="Comments requiring attention">
+          {pending.length ? (
+            <div className="divide-y">
+              {pending.slice(0, 5).map((c) => (
+                <Link
+                  key={c.id}
+                  to="/uw-cms/comments"
+                  className="block py-3 first:pt-0 last:pb-0 hover:text-primary"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold">{c.name}</p>
+                    <span className="text-xs text-muted-foreground">{fmt(c.created_at)}</span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{c.content}</p>
+                </Link>
+              ))}
+            </div>
           ) : (
             <Empty
-              title="No comments yet"
-              text="Visitor comments will appear here when they arrive."
+              title="Nothing needs review"
+              text="New visitor comments will appear here for moderation."
             />
           )}
         </Panel>
@@ -563,7 +577,7 @@ export function BlogList() {
     <section>
       <Title
         title="Blog posts"
-        text="Create, manage and publish Unity Welcome stories."
+        text="Manage and publish Unity Welcome stories."
         action={
           <Button asChild>
             <Link to="/uw-cms/blog/new">
@@ -618,24 +632,14 @@ export function BlogList() {
               ? "Try changing your search or filters."
               : "Create your first story to start building the blog."
           }
-          action={
-            !posts.length ? (
-              <Button asChild>
-                <Link to="/uw-cms/blog/new">
-                  <Plus />
-                  Create post
-                </Link>
-              </Button>
-            ) : undefined
-          }
         />
       ) : (
         <>
-          <div className="hidden overflow-hidden rounded-xl border bg-background shadow-sm md:block">
+          <div className="hidden overflow-hidden border bg-background md:block">
             <table className="w-full text-left text-sm">
-              <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
+              <thead className="border-b bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  {["Title", "Category", "Status", "Published", "Updated", "Actions"].map((x) => (
+                  {["Post", "Category", "Status", "Featured", "Published", "Actions"].map((x) => (
                     <th className="px-4 py-3 font-semibold" key={x}>
                       {x}
                     </th>
@@ -644,18 +648,31 @@ export function BlogList() {
               </thead>
               <tbody>
                 {filtered.map((p) => (
-                  <tr className="border-t" key={p.id}>
-                    <td className="max-w-64 px-4 py-4">
-                      <p className="truncate font-semibold">{p.title}</p>
-                      {p.featured && <span className="text-xs text-clay">Featured</span>}
+                  <tr className="border-b last:border-0" key={p.id}>
+                    <td className="max-w-sm px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {p.cover_image ? (
+                          <img src={p.cover_image} alt="" className="h-10 w-14 object-cover" />
+                        ) : (
+                          <div className="h-10 w-14 bg-muted" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold">{p.title}</p>
+                          {p.excerpt && (
+                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                              {p.excerpt}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-4 py-4">{category(p.category_id)}</td>
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-3">{category(p.category_id)}</td>
+                    <td className="px-4 py-3">
                       <StatusBadge status={p.status} />
                     </td>
-                    <td className="px-4 py-4 text-muted-foreground">{fmt(p.published_at)}</td>
-                    <td className="px-4 py-4 text-muted-foreground">{fmt(p.updated_at)}</td>
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-3 text-muted-foreground">{p.featured ? "Yes" : "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{fmt(p.published_at)}</td>
+                    <td className="px-4 py-3">
                       <PostActions post={p} act={act} />
                     </td>
                   </tr>
@@ -665,18 +682,19 @@ export function BlogList() {
           </div>
           <div className="space-y-3 md:hidden">
             {filtered.map((p) => (
-              <article className="rounded-xl border bg-background p-4 shadow-sm" key={p.id}>
-                <div className="flex justify-between gap-3">
-                  <div className="min-w-0">
+              <article className="border bg-background p-4" key={p.id}>
+                <div className="flex gap-3">
+                  {p.cover_image && (
+                    <img src={p.cover_image} alt="" className="h-12 w-16 object-cover" />
+                  )}
+                  <div className="min-w-0 flex-1">
                     <h2 className="truncate font-semibold">{p.title}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {category(p.category_id)}
-                      {p.featured ? " · Featured" : ""}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {category(p.category_id)} · {fmt(p.published_at)}
                     </p>
                   </div>
                   <StatusBadge status={p.status} />
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground">Updated {fmt(p.updated_at)}</p>
                 <div className="mt-4">
                   <PostActions post={p} act={act} />
                 </div>
@@ -696,11 +714,10 @@ function PostActions({
   act: (fn: () => Promise<unknown>, message: string) => Promise<void>;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button variant="outline" size="sm" asChild>
-        <Link to="/uw-cms/blog/$id/edit" params={{ id: post.id }}>
+    <div className="flex items-center gap-1">
+      <Button variant="ghost" size="icon" asChild>
+        <Link to="/uw-cms/blog/$id/edit" params={{ id: post.id }} aria-label={`Edit ${post.title}`}>
           <PenLine />
-          Edit
         </Link>
       </Button>
       {post.status !== "published" && (
@@ -714,25 +731,25 @@ function PostActions({
       )}
       {post.status !== "archived" && (
         <Button
-          size="sm"
+          size="icon"
           variant="ghost"
+          aria-label={`Archive ${post.title}`}
           onClick={() => {
             if (confirm("Archive this post?"))
               void act(() => archivePost(post.id), "Post archived.");
           }}
         >
           <Archive />
-          Archive
         </Button>
       )}
       <Button
         size="icon"
         variant="ghost"
+        aria-label={`Delete ${post.title}`}
         onClick={() => {
           if (confirm("Delete this post permanently?"))
             void act(() => deletePost(post.id), "Post deleted.");
         }}
-        aria-label={`Delete ${post.title}`}
       >
         <Trash2 />
       </Button>
@@ -793,6 +810,7 @@ export function PostEditor({ id }: { id?: string }) {
             seo_description: p.seo_description || "",
           });
           setLoading(false);
+          return undefined;
         })
         .catch((e) => toast.error(userMessage(e)));
   }, [id, nav]);
@@ -844,22 +862,21 @@ export function PostEditor({ id }: { id?: string }) {
   };
   if (loading)
     return (
-      <div className="rounded-xl border bg-background p-6 text-sm text-muted-foreground">
-        Loading post…
-      </div>
+      <div className="border bg-background p-6 text-sm text-muted-foreground">Loading post…</div>
     );
   return (
     <section>
       <Title
         title={id ? "Edit post" : "New post"}
-        text="Changes are saved only when you choose an action."
+        text="Write the story, then use publishing settings to save or publish it."
       />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-6">
           <Panel title="Content">
             <div className="space-y-5">
-              <Field label="Title" hint="Use a clear, reader-friendly headline.">
+              <Field label="Title">
                 <Input
+                  className="h-12 text-lg font-semibold"
                   value={form.title}
                   onChange={(e) => {
                     set("title", e.target.value);
@@ -942,15 +959,12 @@ export function PostEditor({ id }: { id?: string }) {
               )}
             </div>
           </Panel>
-          <Panel title="Media">
-            <p className="mb-3 text-sm text-muted-foreground">
-              Upload a cover image for this story.
-            </p>
+          <Panel title="Cover image">
             {form.cover_image && (
               <img
                 src={form.cover_image}
                 alt="Cover preview"
-                className="mb-3 aspect-video w-full rounded-lg object-cover"
+                className="mb-3 aspect-video w-full object-cover"
               />
             )}
             <Input
@@ -1002,9 +1016,9 @@ export function Categories() {
   return (
     <section>
       <Title title="Categories" text="Organize posts with clear, reusable categories." />
-      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-        <form onSubmit={submit} className="h-fit rounded-xl border bg-background p-5 shadow-sm">
-          <h2 className="font-semibold">{edit ? "Edit category" : "New category"}</h2>
+      <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <form onSubmit={submit} className="h-fit border bg-background p-5">
+          <h2 className="text-sm font-semibold">{edit ? "Edit category" : "New category"}</h2>
           <div className="mt-5 space-y-4">
             <Field label="Name">
               <Input
@@ -1051,7 +1065,7 @@ export function Categories() {
         </form>
         <div>
           {items.length ? (
-            <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
+            <div className="border bg-background">
               {items.map((c) => (
                 <article
                   className="flex flex-wrap items-center justify-between gap-4 border-b p-4 last:border-b-0"
@@ -1064,9 +1078,9 @@ export function Categories() {
                       {c.description ? ` · ${c.description}` : ""}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => {
                         setEdit(c.id);
@@ -1110,7 +1124,7 @@ export function Categories() {
 export function Comments() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [filter, setFilter] = useState("pending");
+  const [filter, setFilter] = useState("all");
   const load = () =>
     Promise.all([getCommentsForModeration(), getPostsForAdmin()])
       .then(([c, p]) => {
@@ -1128,29 +1142,40 @@ export function Comments() {
         void load();
       })
       .catch((e) => toast.error(userMessage(e)));
-  const displayed = comments.filter((c) => c.status === filter);
+  const displayed = filter === "all" ? comments : comments.filter((c) => c.status === filter);
+  const statuses = ["all", "pending", "approved", "rejected", "spam"];
   return (
     <section>
-      <Title title="Comments" text="Review and moderate visitor comments." />
-      <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
-        {["pending", "approved", "rejected", "spam"].map((s) => (
-          <Button
+      <Title
+        title="Comments"
+        text="Review visitor conversations and moderate community discussion."
+      />
+      <div
+        className="mb-5 flex gap-1 overflow-x-auto border-b"
+        role="tablist"
+        aria-label="Comment status filters"
+      >
+        {statuses.map((s) => (
+          <button
             key={s}
-            size="sm"
-            variant={filter === s ? "default" : "outline"}
+            type="button"
+            role="tab"
+            aria-selected={filter === s}
             onClick={() => setFilter(s)}
-            className="capitalize"
+            className={`whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium capitalize ${filter === s ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
           >
             {s}
-            <span className="ml-1 opacity-70">{comments.filter((c) => c.status === s).length}</span>
-          </Button>
+            <span className="ml-1.5 text-xs opacity-70">
+              {s === "all" ? comments.length : comments.filter((c) => c.status === s).length}
+            </span>
+          </button>
         ))}
       </div>
       {displayed.length ? (
-        <div className="space-y-3">
+        <div className="border bg-background">
           {displayed.map((c) => (
             <article
-              className={`rounded-xl border bg-background p-4 shadow-sm ${c.status === "pending" ? "border-gold/60" : ""}`}
+              className={`border-b p-5 last:border-b-0 ${c.status === "pending" ? "border-l-2 border-l-gold" : ""}`}
               key={c.id}
             >
               <div className="flex flex-col justify-between gap-4 sm:flex-row">
@@ -1163,30 +1188,36 @@ export function Comments() {
                     {fmt(c.created_at)} ·{" "}
                     {posts.find((p) => p.id === c.post_id)?.title || "Deleted post"}
                   </p>
-                  <p className="mt-3 text-sm leading-6">{c.content}</p>
+                  <p className="mt-3 max-w-3xl text-sm leading-6">{c.content}</p>
                 </div>
-                <div className="flex h-fit flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => void act(() => approveComment(c.id), "Comment approved.")}
-                  >
-                    <Check />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void act(() => rejectComment(c.id), "Comment rejected.")}
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void act(() => markCommentAsSpam(c.id), "Marked as spam.")}
-                  >
-                    Spam
-                  </Button>
+                <div className="flex h-fit flex-wrap gap-1">
+                  {c.status !== "approved" && (
+                    <Button
+                      size="sm"
+                      onClick={() => void act(() => approveComment(c.id), "Comment approved.")}
+                    >
+                      <Check />
+                      Approve
+                    </Button>
+                  )}
+                  {c.status !== "rejected" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void act(() => rejectComment(c.id), "Comment rejected.")}
+                    >
+                      Reject
+                    </Button>
+                  )}
+                  {c.status !== "spam" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void act(() => markCommentAsSpam(c.id), "Marked as spam.")}
+                    >
+                      Spam
+                    </Button>
+                  )}
                   <Button
                     size="icon"
                     variant="ghost"
@@ -1214,52 +1245,102 @@ export function Comments() {
 }
 
 export function Media() {
-  const [url, setUrl] = useState("");
+  const [images, setImages] = useState<MediaImage[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const load = () =>
+    listBlogImages()
+      .then(setImages)
+      .catch(() => setError("We couldn't load the media library. Please try again."));
+  useEffect(() => {
+    void load();
+  }, []);
   const upload = async (file?: File) => {
     if (!file) return;
     setUploading(true);
     try {
-      const result = await uploadBlogImage(file);
-      setUrl(result.publicUrl);
-      toast.success("Image uploaded. Copy its URL into a post if needed.");
+      await uploadBlogImage(file);
+      toast.success("Image uploaded.");
+      void load();
     } catch (e) {
       toast.error(userMessage(e));
     } finally {
       setUploading(false);
     }
   };
+  const remove = async (image: MediaImage) => {
+    if (!confirm(`Delete ${image.name}? This cannot be undone.`)) return;
+    try {
+      await deleteBlogImage(image.path);
+      toast.success("Image deleted.");
+      void load();
+    } catch (e) {
+      toast.error(userMessage(e));
+    }
+  };
   return (
     <section>
-      <Title title="Media" text="Upload approved images for blog posts." />
-      <Panel title="Upload an image" className="max-w-2xl">
-        <Input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          disabled={uploading}
-          onChange={(e) => void upload(e.target.files?.[0])}
-        />
-        <p className="mt-2 text-sm text-muted-foreground">JPEG, PNG, WebP, or GIF up to 5 MB.</p>
-        {uploading && (
-          <p className="mt-4 flex items-center gap-2 text-sm font-medium">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-clay" />
-            Uploading image…
-          </p>
-        )}
-        {url && (
-          <div className="mt-5 rounded-lg border bg-muted/20 p-3">
-            <img
-              src={url}
-              alt="Uploaded image preview"
-              className="max-h-80 w-full rounded-md object-contain"
+      <Title
+        title="Media"
+        text="Manage approved images for blog posts."
+        action={
+          <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+            <Plus />
+            {uploading ? "Uploading…" : "Upload image"}
+            <input
+              className="sr-only"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              disabled={uploading}
+              onChange={(e) => void upload(e.target.files?.[0])}
             />
-            <label className="mt-4 block text-xs font-semibold text-muted-foreground">
-              Image URL
-              <Input readOnly className="mt-1" value={url} aria-label="Uploaded image URL" />
+          </label>
+        }
+      />
+      {error ? (
+        <ErrorNotice text={error} />
+      ) : images.length ? (
+        <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {images.map((image) => (
+            <article key={image.path} className="group relative bg-background">
+              <img
+                src={image.publicUrl}
+                alt={image.name}
+                className="aspect-square w-full object-cover"
+              />
+              <div className="flex items-center justify-between gap-2 p-2">
+                <p className="truncate text-xs text-muted-foreground">{image.name}</p>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-destructive"
+                  aria-label={`Delete ${image.name}`}
+                  onClick={() => void remove(image)}
+                >
+                  <Trash2 size={15} />
+                </Button>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <Empty
+          title="No media yet"
+          text="Upload an approved image to use it in a blog post."
+          action={
+            <label className="inline-flex h-8 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground">
+              <Plus />
+              Upload image
+              <input
+                className="sr-only"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={(e) => void upload(e.target.files?.[0])}
+              />
             </label>
-          </div>
-        )}
-      </Panel>
+          }
+        />
+      )}
     </section>
   );
 }
