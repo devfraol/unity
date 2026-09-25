@@ -102,7 +102,7 @@ export function Navbar() {
               <Phone className="size-4" aria-hidden="true" />
               {org.phone}
             </a>
-            <ActionLink to="https://donate.stripe.com/test_3cI4gz5ph7LN83d5Ob1ck00
+            <ActionLink to="https://buy.stripe.com/test_5kQ14n5rc31j4pU3xTgfu00
 " variant="primary" className="px-6 py-3">
               Donate
             </ActionLink>
