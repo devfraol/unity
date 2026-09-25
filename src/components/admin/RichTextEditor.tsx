@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ClipboardEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { plainTextToRichHtml, sanitizeRichHtml } from "@/lib/sanitize-html";
 
 const commands = [
   ["Bold", "bold"],
@@ -27,6 +28,34 @@ export function RichTextEditor({
     editor.current?.focus();
     onChange(editor.current?.innerHTML || "");
   };
+  const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
+    const html = event.clipboardData.getData("text/html");
+    const text = event.clipboardData.getData("text/plain");
+    const pastedHtml = html
+      ? sanitizeRichHtml(html, { allowImages: false })
+      : plainTextToRichHtml(text);
+    if (!pastedHtml) return;
+
+    event.preventDefault();
+    const editable = editor.current;
+    const selection = window.getSelection();
+    if (!editable || !selection?.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    if (!editable.contains(range.commonAncestorContainer)) return;
+
+    range.deleteContents();
+    const fragment = range.createContextualFragment(pastedHtml);
+    const lastNode = fragment.lastChild;
+    range.insertNode(fragment);
+    if (lastNode) {
+      range.setStartAfter(lastNode);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    onChange(editable.innerHTML);
+  };
   return (
     <div className="rounded-md border border-input bg-background">
       <div className="flex flex-wrap gap-1 border-b p-2">
@@ -51,7 +80,7 @@ export function RichTextEditor({
           onMouseDown={(e) => {
             e.preventDefault();
             const url = window.prompt("Link URL (https://...)");
-            if (url?.startsWith("http")) apply("createLink", url);
+            if (url && /^(https?:|mailto:)/i.test(url.trim())) apply("createLink", url.trim());
           }}
         >
           Link
@@ -77,6 +106,7 @@ export function RichTextEditor({
         aria-label="Post content editor"
         aria-multiline="true"
         onInput={() => onChange(editor.current?.innerHTML || "")}
+        onPaste={handlePaste}
         className="min-h-72 p-4 outline-none prose prose-sm max-w-none focus-visible:ring-2 focus-visible:ring-ring"
       />
     </div>
