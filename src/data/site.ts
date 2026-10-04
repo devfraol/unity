@@ -192,8 +192,6 @@ export const programs: Program[] = [
 ];
 
 export const boardMembers = [
-  { name: "Adamu Nigussie", photo: "1" },
-  { name: "Fasil Workeneh", photo: "2" },
   { name: "Daraje Leiyu", photo: "3" },
   { name: "Michael Benti", photo: "4" },
   { name: "Sammy Gebrael", photo: "5" },
